@@ -193,7 +193,11 @@ func (seg *Segmenter) Read(file string) error {
 	}
 	defer dictFile.Close()
 
-	reader := bufio.NewReader(dictFile)
+	return seg.Reader(bufio.NewReader(dictFile))
+}
+
+// Reader read from reader
+func (seg *Segmenter) Reader(r io.Reader) error {
 	var (
 		text      string
 		freqText  string
@@ -205,7 +209,7 @@ func (seg *Segmenter) Read(file string) error {
 	line := 0
 	for {
 		line++
-		size, fsErr := fmt.Fscanln(reader, &text, &freqText, &pos)
+		size, fsErr := fmt.Fscanln(r, &text, &freqText, &pos)
 		if fsErr != nil {
 			if fsErr == io.EOF {
 				// End of file
@@ -214,12 +218,12 @@ func (seg *Segmenter) Read(file string) error {
 
 			if size > 0 {
 				if seg.MoreLog {
-					log.Printf("File '%v' line \"%v\" read error: %v, skip",
-						file, line, fsErr.Error())
+					log.Printf("Read line \"%v\" read error: %v, skip",
+						line, fsErr.Error())
 				}
 			} else {
-				log.Printf("File '%v' line \"%v\" is empty, read error: %v, skip",
-					file, line, fsErr.Error())
+				log.Printf("Read line \"%v\" is empty, read error: %v, skip",
+					line, fsErr.Error())
 			}
 		}
 
@@ -261,7 +265,6 @@ func (seg *Segmenter) Read(file string) error {
 		token := Token{text: words, frequency: frequency, pos: pos}
 		seg.Dict.addToken(token)
 	}
-
 	return nil
 }
 
